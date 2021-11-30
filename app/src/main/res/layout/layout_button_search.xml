@@ -2,13 +2,17 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:visibility="visible"
+    android:id="@+id/frame_search_button">
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_search"
         android:layout_width="80dp"
         android:layout_height="wrap_content"
         android:textColor="#fff"
+        android:paddingVertical="10dp"
+        android:textAlignment="center"
         android:text="검색"
         android:textStyle="bold"
         android:clickable="true"/>
@@ -19,6 +23,7 @@
         android:layout_height="25dp"
         android:layout_gravity="center"
         android:indeterminateTint="#fff"
-        android:visibility="invisible"/>
+        android:visibility="visible"/>
+
 
 </FrameLayout>
