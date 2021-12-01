@@ -7,7 +7,9 @@ import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import com.example.unsplash_app_tutorial.retrofit.RetrofitManager
 import com.example.unsplash_app_tutorial.utils.Constants.TAG
+import com.example.unsplash_app_tutorial.utils.RESPONSE_STATE
 import com.example.unsplash_app_tutorial.utils.SEARCH_TYPE
 import com.example.unsplash_app_tutorial.utils.onMyTextChanged
 import kotlinx.android.synthetic.main.activity_main.*
@@ -66,12 +68,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // 검색버튼 클릭시
         btn_search.setOnClickListener {
             Log.d(TAG, "onCreate: 검색 버튼이 클릭되었다. / currentSearchType $currentSearchType")
+
+            // 검색 api 호출
+            RetrofitManager.instance.searchPhotos(searchTerm = search_term_edit_text.text.toString(), completion = {
+                responseState, responseBody ->
+                when(responseState) {
+                    RESPONSE_STATE.OKAY -> {
+                        Log.d(TAG, "api 호출 성공 : $responseBody")
+                    }
+
+                    RESPONSE_STATE.FAIL -> {
+                        Toast.makeText(this, "api 호출 에러 입니다", Toast.LENGTH_SHORT).show()
+                        Log.d(TAG, "api 호출 실패 : $responseBody")
+                    }
+                }
+            })
             this.handleSearchButtonUi()
-
-
-
 
         }
 
