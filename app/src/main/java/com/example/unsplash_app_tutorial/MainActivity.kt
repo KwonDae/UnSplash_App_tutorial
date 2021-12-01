@@ -120,7 +120,7 @@ class MainActivity : AppCompatActivity() {
         btn_progress.visibility = View.VISIBLE
         btn_search.text = ""
 //        Handler().postDelayed({
-//            btn_search.visibility = View.INVISIBLE
+//            btn_progress.visibility = View.INVISIBLE
 //            btn_search.text = "검색"
 //        }, 1500)
     }
