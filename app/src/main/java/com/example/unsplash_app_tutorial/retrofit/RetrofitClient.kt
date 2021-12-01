@@ -1,6 +1,10 @@
 package com.example.unsplash_app_tutorial.retrofit
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.widget.Toast
+import com.example.unsplash_app_tutorial.App
 import com.example.unsplash_app_tutorial.utils.API
 import com.example.unsplash_app_tutorial.utils.Constants.TAG
 import com.example.unsplash_app_tutorial.utils.isJsonArray
@@ -24,7 +28,7 @@ object RetrofitClient {
     //private lateinit var retrofitClient: Retrofit
 
     //레트로핏 클라이언트 가져오기
-    fun getClient(baseUrl : String): Retrofit? {
+    fun getClient(baseUrl: String): Retrofit? {
         Log.d(TAG, "RetrofitClient - getClient: called")
 
 
@@ -32,7 +36,7 @@ object RetrofitClient {
         val client = OkHttpClient.Builder()
 
         // 로그를 찍기 위해 로깅 인터셉터 설정
-        val loggingInterceptor = HttpLoggingInterceptor(object: HttpLoggingInterceptor.Logger {
+        val loggingInterceptor = HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
             override fun log(message: String) {
 //                Log.d(TAG, "RetrofitClient - log() called / message: $message")
                 when {
@@ -64,7 +68,7 @@ object RetrofitClient {
         client.retryOnConnectionFailure(true)
 
         // 기본 파라미터 추가
-        val baseParameterInterceptor : Interceptor = (object : Interceptor{
+        val baseParameterInterceptor: Interceptor = (object : Interceptor {
             override fun intercept(chain: Interceptor.Chain): Response {
                 Log.d(TAG, "RetrofitClient - intercept() called")
                 //오리지날 리퀘스트
@@ -77,7 +81,19 @@ object RetrofitClient {
                     .method(originalRequest.method,originalRequest.body)
                     .build()
 
-                return chain.proceed(finalRequest)
+//                return chain.proceed(finalRequest)
+
+                val response = chain.proceed(finalRequest)
+
+                if (response.code != 200) {
+                    // 최상단의 instance(context)를 가져옴
+                    Handler(Looper.getMainLooper()).post {
+                        Toast.makeText(App.instance, "${response.code} 에러 입니다.", Toast.LENGTH_SHORT)
+                            .show()
+                    }
+                }
+
+                return response
             }
 
         })
@@ -86,7 +102,7 @@ object RetrofitClient {
         client.addInterceptor(baseParameterInterceptor)
 
 
-        if(retrofitClient == null) {
+        if (retrofitClient == null) {
             //레트로핏 빌더
             retrofitClient = Retrofit.Builder()
                 .baseUrl(baseUrl)

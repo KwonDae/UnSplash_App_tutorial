@@ -17,7 +17,7 @@
     <!-- 메테리얼테마 -->
     <style name="Theme.MyApp" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- ... -->
-        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
         <item name="colorOnPrimary">@color/white</item>
     </style>
