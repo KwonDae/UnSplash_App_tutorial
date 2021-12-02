@@ -117,7 +117,9 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
     override fun onQueryTextChange(newText: String?): Boolean {
         Log.d(TAG, "PhotoCollectionActivity - onQueryTextChange called / newTezt: $newText")
-        
+
+
+
         val userInputText = newText.let {
             it
         }?: ""
