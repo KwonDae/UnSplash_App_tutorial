@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.text.InputFilter
 import android.util.Log
 import android.view.Menu
+import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -76,9 +77,11 @@ class PhotoCollectionActivity : AppCompatActivity(),
                 when(hasExpaned) {
                     true -> {
                         Log.d(TAG, "서치뷰 열림");
+                        linear_search_history_view.visibility = View.VISIBLE
                     }
                     false -> {
                         Log.d(TAG, "서치뷰 닫힘")
+                        linear_search_history_view.visibility = View.INVISIBLE
                     }
                 }
             }
@@ -117,8 +120,6 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
     override fun onQueryTextChange(newText: String?): Boolean {
         Log.d(TAG, "PhotoCollectionActivity - onQueryTextChange called / newTezt: $newText")
-
-
 
         val userInputText = newText.let {
             it
