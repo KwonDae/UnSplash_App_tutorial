@@ -6,7 +6,7 @@
     android:id="@+id/main_scrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".PhotoCollectionActivity">
+    tools:context=".activities.PhotoCollectionActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"

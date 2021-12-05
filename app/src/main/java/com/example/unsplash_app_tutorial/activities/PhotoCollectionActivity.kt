@@ -1,4 +1,4 @@
-package com.example.unsplash_app_tutorial
+package com.example.unsplash_app_tutorial.activities
 
 import android.app.SearchManager
 import android.content.Context
@@ -14,10 +14,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.GridLayoutManager
+import com.example.unsplash_app_tutorial.R
 import com.example.unsplash_app_tutorial.model.Photo
+import com.example.unsplash_app_tutorial.model.SearchData
 import com.example.unsplash_app_tutorial.recyclerview.PhotoGridRecyclerViewAdapter
 import com.example.unsplash_app_tutorial.utils.Constants.TAG
+import com.example.unsplash_app_tutorial.utils.SharedPrefManager
 import kotlinx.android.synthetic.main.activity_photo_collection.*
+import java.util.*
+import kotlin.collections.ArrayList
 
 class PhotoCollectionActivity : AppCompatActivity(),
     SearchView.OnQueryTextListener,
@@ -26,6 +31,9 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
     // 데이터
     private var photoList = ArrayList<Photo>()
+
+    // 검색 기록 배열
+    private var searchHistoryList = ArrayList<SearchData>()
 
     // 어답터
     private lateinit var photoGridRecyclerViewAdapter: PhotoGridRecyclerViewAdapter
@@ -61,6 +69,12 @@ class PhotoCollectionActivity : AppCompatActivity(),
         my_photo_recycler_view.layoutManager =
             GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
         my_photo_recycler_view.adapter = this.photoGridRecyclerViewAdapter
+
+        this.searchHistoryList = SharedPrefManager.getSearchHistoryList() as ArrayList<SearchData>
+
+        this.searchHistoryList.forEach {
+            Log.d(TAG, "저장된 검색 기록 - it.term : ${it.term}, it.timestamp : ${it.timestamp}");
+        }
 
         Log.d(
             TAG,
@@ -117,7 +131,12 @@ class PhotoCollectionActivity : AppCompatActivity(),
             this.top_app_bar.title = query
 
             // TODO: 2021/12/01 daengdaeng : api 호출
-            // TODO:: 검색어 저장
+            val newSearchData = SearchData(term= query, timestamp = Date().toString())
+
+            this.searchHistoryList.add(newSearchData)
+
+            SharedPrefManager.storeSearchHistoryList(searchHistoryList = this.searchHistoryList)
+
         }
 
 //        this.mySearchView.setQuery("", false)
