@@ -8,6 +8,7 @@ import android.text.InputFilter
 import android.util.Log
 import android.view.Menu
 import android.view.View
+import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -19,8 +20,9 @@ import com.example.unsplash_app_tutorial.utils.Constants.TAG
 import kotlinx.android.synthetic.main.activity_photo_collection.*
 
 class PhotoCollectionActivity : AppCompatActivity(),
-                                    SearchView.OnQueryTextListener
-{
+    SearchView.OnQueryTextListener,
+    CompoundButton.OnCheckedChangeListener,
+    View.OnClickListener {
 
     // 데이터
     private var photoList = ArrayList<Photo>()
@@ -34,6 +36,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
     // 서치뷰 에딧 텍스트
     private lateinit var mySearchViewEditText: EditText
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_photo_collection)
@@ -42,6 +45,9 @@ class PhotoCollectionActivity : AppCompatActivity(),
         val searchTerm = intent.getStringExtra("search_term")
 
         photoList = bundle?.getSerializable("photo_array_list") as ArrayList<Photo>
+
+        search_history_mode_switch.setOnCheckedChangeListener(this)
+        clear_search_history_button.setOnClickListener(this)
 
         top_app_bar.title = searchTerm
 
@@ -52,10 +58,14 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
         this.photoGridRecyclerViewAdapter.submitList(photoList)
 
-        my_photo_recycler_view.layoutManager = GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
+        my_photo_recycler_view.layoutManager =
+            GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
         my_photo_recycler_view.adapter = this.photoGridRecyclerViewAdapter
 
-        Log.d(TAG, "PhotoCollectionActivity - onCreate() called / searchTerm : $searchTerm, photoList.count() : ${photoList.size}")
+        Log.d(
+            TAG,
+            "PhotoCollectionActivity - onCreate() called / searchTerm : $searchTerm, photoList.count() : ${photoList.size}"
+        )
 
     }// onCreate
 
@@ -74,7 +84,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
             this.setOnQueryTextListener(this@PhotoCollectionActivity)
 
             this.setOnQueryTextFocusChangeListener { _, hasExpaned ->
-                when(hasExpaned) {
+                when (hasExpaned) {
                     true -> {
                         Log.d(TAG, "서치뷰 열림");
                         linear_search_history_view.visibility = View.VISIBLE
@@ -103,7 +113,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
     override fun onQueryTextSubmit(query: String?): Boolean {
         Log.d(TAG, "PhotoCollectionActivity - onQueryTextSubmit called / query: $query")
 
-        if(!query.isNullOrEmpty()) {
+        if (!query.isNullOrEmpty()) {
             this.top_app_bar.title = query
 
             // TODO: 2021/12/01 daengdaeng : api 호출
@@ -123,11 +133,31 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
         val userInputText = newText.let {
             it
-        }?: ""
-        
-        if(userInputText.count() == 12) {
+        } ?: ""
+
+        if (userInputText.count() == 12) {
             Toast.makeText(this, "검색어는 12자 까지만 입력 가능합니다.", Toast.LENGTH_SHORT).show()
         }
         return true
+    }
+
+    override fun onCheckedChanged(switch: CompoundButton?, isChecked: Boolean) {
+        when (switch) {
+            search_history_mode_switch -> {
+                if (isChecked) {
+                    Log.d(TAG, "검색어 저장 기능 On");
+                } else {
+                    Log.d(TAG, "검색어 저장 기능 off");
+                }
+            }
+        }
+    }
+
+    override fun onClick(v: View?) {
+        when(v) {
+            clear_search_history_button -> {
+                Log.d(TAG, "검색 기록 삭제 버튼이 클릭되었다.");
+            }
+        }
     }
 }
