@@ -14,12 +14,15 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.unsplash_app_tutorial.R
 import com.example.unsplash_app_tutorial.model.Photo
 import com.example.unsplash_app_tutorial.model.SearchData
 import com.example.unsplash_app_tutorial.recyclerview.PhotoGridRecyclerViewAdapter
+import com.example.unsplash_app_tutorial.recyclerview.SearchHistoryRecyclerViewAdapter
 import com.example.unsplash_app_tutorial.utils.Constants.TAG
 import com.example.unsplash_app_tutorial.utils.SharedPrefManager
+import com.example.unsplash_app_tutorial.utils.toStrings
 import kotlinx.android.synthetic.main.activity_photo_collection.*
 import java.util.*
 import kotlin.collections.ArrayList
@@ -37,6 +40,8 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
     // 어답터
     private lateinit var photoGridRecyclerViewAdapter: PhotoGridRecyclerViewAdapter
+
+    private lateinit var searchHistoryRecyclerViewAdapter: SearchHistoryRecyclerViewAdapter
 
     // 서치뷰
     private lateinit var mySearchView: SearchView
@@ -70,11 +75,17 @@ class PhotoCollectionActivity : AppCompatActivity(),
             GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
         my_photo_recycler_view.adapter = this.photoGridRecyclerViewAdapter
 
+        this.searchHistoryRecyclerViewAdapter = SearchHistoryRecyclerViewAdapter()
+
         this.searchHistoryList = SharedPrefManager.getSearchHistoryList() as ArrayList<SearchData>
 
         this.searchHistoryList.forEach {
             Log.d(TAG, "저장된 검색 기록 - it.term : ${it.term}, it.timestamp : ${it.timestamp}");
         }
+
+        this.searchHistoryRecyclerViewAdapter.submitList(this.searchHistoryList)
+
+        search_history_recycler_view.adapter = this.searchHistoryRecyclerViewAdapter
 
         Log.d(
             TAG,
@@ -131,7 +142,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
             this.top_app_bar.title = query
 
             // TODO: 2021/12/01 daengdaeng : api 호출
-            val newSearchData = SearchData(term= query, timestamp = Date().toString())
+            val newSearchData = SearchData(term= query, timestamp = Date().toStrings())
 
             this.searchHistoryList.add(newSearchData)
 
