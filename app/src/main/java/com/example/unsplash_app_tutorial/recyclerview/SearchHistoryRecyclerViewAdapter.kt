@@ -18,7 +18,7 @@ class SearchHistoryRecyclerViewAdapter : RecyclerView.Adapter<SearchHistoryItemV
     }
 
     override fun onBindViewHolder(holder: SearchHistoryItemViewHolder, position: Int) {
-        holder.bindWithView(historyData = historyDataList.get(position))
+        holder.bindWithView(historyData = historyDataList[position])
     }
 
     override fun getItemCount(): Int {

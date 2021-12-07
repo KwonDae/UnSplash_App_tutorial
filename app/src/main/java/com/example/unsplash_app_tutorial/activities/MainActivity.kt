@@ -8,18 +8,21 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import com.example.unsplash_app_tutorial.R
+import com.example.unsplash_app_tutorial.model.SearchData
 import com.example.unsplash_app_tutorial.retrofit.RetrofitManager
+import com.example.unsplash_app_tutorial.utils.*
 import com.example.unsplash_app_tutorial.utils.Constants.TAG
-import com.example.unsplash_app_tutorial.utils.RESPONSE_STATUS
-import com.example.unsplash_app_tutorial.utils.SEARCH_TYPE
-import com.example.unsplash_app_tutorial.utils.onMyTextChanged
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.layout_button_search.*
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
 
     private var currentSearchType: SEARCH_TYPE = SEARCH_TYPE.PHOTO
+
+    private var searchHistoryList = ArrayList<SearchData>()
 
     @SuppressLint("UseCompatLoadingForDrawables")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,6 +30,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         Log.d(TAG, "MainActivity - onCreate() called")
+
+        searchHistoryList = SharedPrefManager.getSearchHistoryList() as ArrayList<SearchData>
 
         // 라디오 그룹 가져오기
         search_term_radio_group.setOnCheckedChangeListener { _, checkedId ->
@@ -83,6 +88,13 @@ class MainActivity : AppCompatActivity() {
                 when(responseState) {
                     RESPONSE_STATUS.OKAY -> {
                         Log.d(TAG, "api 호출 성공 : ${responseDataArrayList?.size}")
+
+                        // 검색 히스토리 저장
+                        var newSearchData = SearchData(term = search_term_edit_text.text.toString(), timestamp = Date().toStrings())
+
+                        searchHistoryList.add(newSearchData)
+
+                        SharedPrefManager.storeSearchHistoryList(searchHistoryList = searchHistoryList)
 
                         val intent = Intent(this, PhotoCollectionActivity::class.java)
 

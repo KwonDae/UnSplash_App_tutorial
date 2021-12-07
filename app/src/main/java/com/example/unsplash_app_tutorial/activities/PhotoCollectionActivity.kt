@@ -57,8 +57,6 @@ class PhotoCollectionActivity : AppCompatActivity(),
         val bundle = intent.getBundleExtra("array_bundle")
         val searchTerm = intent.getStringExtra("search_term")
 
-        photoList = bundle?.getSerializable("photo_array_list") as ArrayList<Photo>
-
         search_history_mode_switch.setOnCheckedChangeListener(this)
         clear_search_history_button.setOnClickListener(this)
 
@@ -66,6 +64,44 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
         // 액티비티에서 어떤 액션바를 사용할지 설정한다.
         setSupportActionBar(top_app_bar)
+
+        photoList = bundle?.getSerializable("photo_array_list") as ArrayList<Photo>
+
+        // 사진 리사이클러뷰 세팅
+        this.photoCollectionRecyclerViewSetting(this.photoList)
+
+        this.searchHistoryList = SharedPrefManager.getSearchHistoryList() as ArrayList<SearchData>
+
+        this.searchHistoryList.forEach {
+            Log.d(TAG, "저장된 검색 기록 - it.term : ${it.term}, it.timestamp : ${it.timestamp}");
+        }
+
+        // 감섹 리사이클러뷰 세팅
+        this.searchHistoryRecyclerViewSetting(this.searchHistoryList)
+
+    }// onCreate
+
+    private fun searchHistoryRecyclerViewSetting(searchHistoryList: ArrayList<SearchData>) {
+        Log.d(TAG, "PhotoCollectionActivity - searchHistoryRecyclerViewSetting called / ")
+
+        //어댑터 준비
+        this.searchHistoryRecyclerViewAdapter = SearchHistoryRecyclerViewAdapter()
+        this.searchHistoryRecyclerViewAdapter.submitList(searchHistoryList)
+
+        val myLinearLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true)
+        myLinearLayoutManager.stackFromEnd = true
+
+        search_history_recycler_view.apply {
+            this.layoutManager = myLinearLayoutManager
+            this.scrollToPosition(searchHistoryRecyclerViewAdapter.itemCount - 1)
+            adapter = searchHistoryRecyclerViewAdapter
+        }
+
+    }
+
+    // 그리드 사진 RecyclerView Setting
+    private fun photoCollectionRecyclerViewSetting(photoList: ArrayList<Photo>) {
+        Log.d(TAG, "PhotoCollectionActivity - photoCollectionRecyclerViewSetting called / ");
 
         this.photoGridRecyclerViewAdapter = PhotoGridRecyclerViewAdapter(null)
 
@@ -75,24 +111,8 @@ class PhotoCollectionActivity : AppCompatActivity(),
             GridLayoutManager(this, 2, GridLayoutManager.VERTICAL, false)
         my_photo_recycler_view.adapter = this.photoGridRecyclerViewAdapter
 
-        this.searchHistoryRecyclerViewAdapter = SearchHistoryRecyclerViewAdapter()
+    }
 
-        this.searchHistoryList = SharedPrefManager.getSearchHistoryList() as ArrayList<SearchData>
-
-        this.searchHistoryList.forEach {
-            Log.d(TAG, "저장된 검색 기록 - it.term : ${it.term}, it.timestamp : ${it.timestamp}");
-        }
-
-        this.searchHistoryRecyclerViewAdapter.submitList(this.searchHistoryList)
-
-        search_history_recycler_view.adapter = this.searchHistoryRecyclerViewAdapter
-
-        Log.d(
-            TAG,
-            "PhotoCollectionActivity - onCreate() called / searchTerm : $searchTerm, photoList.count() : ${photoList.size}"
-        )
-
-    }// onCreate
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         Log.d(TAG, "PhotoCollectionActivity - onCreateOptionsMenu called / ");
