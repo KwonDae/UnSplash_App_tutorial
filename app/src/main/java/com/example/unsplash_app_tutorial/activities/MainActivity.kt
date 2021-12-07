@@ -89,13 +89,6 @@ class MainActivity : AppCompatActivity() {
                     RESPONSE_STATUS.OKAY -> {
                         Log.d(TAG, "api 호출 성공 : ${responseDataArrayList?.size}")
 
-                        // 검색 히스토리 저장
-                        var newSearchData = SearchData(term = search_term_edit_text.text.toString(), timestamp = Date().toStrings())
-
-                        searchHistoryList.add(newSearchData)
-
-                        SharedPrefManager.storeSearchHistoryList(searchHistoryList = searchHistoryList)
-
                         val intent = Intent(this, PhotoCollectionActivity::class.java)
 
                         val bundle = Bundle()

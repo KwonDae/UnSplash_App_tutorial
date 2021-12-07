@@ -41,6 +41,7 @@
         android:orientation="vertical"
         android:background="@color/white"
         android:visibility="invisible"
+        tools:visibility="visible"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"
         >
 
@@ -90,6 +91,7 @@
             android:background="@color/colorLightGray"/>
 
         <TextView
+            android:id="@+id/search_history_recycler_view_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="최근 검색어"
