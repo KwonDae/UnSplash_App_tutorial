@@ -8,9 +8,13 @@ import com.example.unsplash_app_tutorial.utils.Constants.TAG
 import kotlinx.android.synthetic.main.layout_search_history_item.view.*
 import java.text.SimpleDateFormat
 
-class SearchHistoryItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
-                                                    View.OnClickListener {
+class SearchHistoryItemViewHolder(
+    itemView: View,
+    searchHistoryRecyclerViewInterface: ISearchHistoryRecyclerView
+) : RecyclerView.ViewHolder(itemView),
+    View.OnClickListener {
 
+    private lateinit var iSearchHistoryRecyclerView: ISearchHistoryRecyclerView
 
     private val titleTextView = itemView.search_history_title_text_view
     private val timeTextView = itemView.search_history_time_text_view
@@ -18,9 +22,11 @@ class SearchHistoryItemViewHolder(itemView: View) : RecyclerView.ViewHolder(item
     private val constraintSearchItem = itemView.constraint_search_item
 
     init {
+        Log.d(TAG, "SearchHistoryItemViewHolder - init() called / ")
         //this = View.OnClickListener 나 자신이다
         deleteSearchBtn.setOnClickListener(this)
         constraintSearchItem.setOnClickListener(this)
+        this.iSearchHistoryRecyclerView = searchHistoryRecyclerViewInterface
     }
 
     // 데이터와 뷰를 묶는다
@@ -36,12 +42,14 @@ class SearchHistoryItemViewHolder(itemView: View) : RecyclerView.ViewHolder(item
 
     override fun onClick(v: View?) {
         Log.d(TAG, "SearchHistoryItemViewHolder - onClick called / ");
-        when(v) {
+        when (v) {
             deleteSearchBtn -> {
-                Log.d(TAG, "SearchHistoryItemViewHolder - onClick called / 검색 삭제 버튼 클릭 ");
+                Log.d(TAG, "SearchHistoryItemViewHolder - onClick called / 검색 삭제 버튼 클릭 ")
+                this.iSearchHistoryRecyclerView.onSearchItemDeleteBtnClicked(adapterPosition)
             }
             constraintSearchItem -> {
-                Log.d(TAG, "SearchHistoryItemViewHolder - onClick called / 검색 아이템 클릭");
+                Log.d(TAG, "SearchHistoryItemViewHolder - onClick called / 검색 아이템 클릭")
+                this.iSearchHistoryRecyclerView.onSearchItemClicked(adapterPosition)
             }
         }
     }

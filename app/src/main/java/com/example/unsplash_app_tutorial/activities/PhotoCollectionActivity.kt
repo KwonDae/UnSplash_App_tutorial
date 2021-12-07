@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.unsplash_app_tutorial.R
 import com.example.unsplash_app_tutorial.model.Photo
 import com.example.unsplash_app_tutorial.model.SearchData
+import com.example.unsplash_app_tutorial.recyclerview.ISearchHistoryRecyclerView
 import com.example.unsplash_app_tutorial.recyclerview.PhotoGridRecyclerViewAdapter
 import com.example.unsplash_app_tutorial.recyclerview.SearchHistoryRecyclerViewAdapter
 import com.example.unsplash_app_tutorial.utils.Constants.TAG
@@ -30,7 +31,8 @@ import kotlin.collections.ArrayList
 class PhotoCollectionActivity : AppCompatActivity(),
     SearchView.OnQueryTextListener,
     CompoundButton.OnCheckedChangeListener,
-    View.OnClickListener {
+    View.OnClickListener,
+    ISearchHistoryRecyclerView {
 
     // 데이터
     private var photoList = ArrayList<Photo>()
@@ -85,7 +87,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
         Log.d(TAG, "PhotoCollectionActivity - searchHistoryRecyclerViewSetting called / ")
 
         //어댑터 준비
-        this.searchHistoryRecyclerViewAdapter = SearchHistoryRecyclerViewAdapter()
+        this.searchHistoryRecyclerViewAdapter = SearchHistoryRecyclerViewAdapter(this)
         this.searchHistoryRecyclerViewAdapter.submitList(searchHistoryList)
 
         val myLinearLayoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true)
@@ -162,7 +164,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
             this.top_app_bar.title = query
 
             // TODO: 2021/12/01 daengdaeng : api 호출
-            val newSearchData = SearchData(term= query, timestamp = Date().toStrings())
+            val newSearchData = SearchData(term = query, timestamp = Date().toStrings())
 
             this.searchHistoryList.add(newSearchData)
 
@@ -204,10 +206,23 @@ class PhotoCollectionActivity : AppCompatActivity(),
     }
 
     override fun onClick(v: View?) {
-        when(v) {
+        when (v) {
             clear_search_history_button -> {
                 Log.d(TAG, "검색 기록 삭제 버튼이 클릭되었다.");
             }
         }
+    }
+
+    // 검색 아이템 삭제 버튼 이벤트
+    override fun onSearchItemDeleteBtnClicked(position: Int) {
+        Log.d(TAG, "PhotoCollectionActivity - onSearchItemDeleteBtnClicked called / position : $position")
+        //TODO: 해당 번째의 녀석을 삭제
+        // 다시 저장
+    }
+
+    // 검색 아이템 클릭 이벤트
+    override fun onSearchItemClicked(position: Int) {
+        Log.d(TAG, "PhotoCollectionActivity - onSearchItemClicked called / position : $position")
+        // 해당 녀석의 검색어를 다시 호출
     }
 }
