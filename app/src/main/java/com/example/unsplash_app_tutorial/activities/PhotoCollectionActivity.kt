@@ -25,6 +25,7 @@ import com.example.unsplash_app_tutorial.retrofit.RetrofitManager
 import com.example.unsplash_app_tutorial.utils.Constants.TAG
 import com.example.unsplash_app_tutorial.utils.RESPONSE_STATUS
 import com.example.unsplash_app_tutorial.utils.SharedPrefManager
+import com.example.unsplash_app_tutorial.utils.textChangesToFlow
 import com.example.unsplash_app_tutorial.utils.toStrings
 import com.jakewharton.rxbinding4.widget.textChanges
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
@@ -33,6 +34,13 @@ import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_photo_collection.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -61,7 +69,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
     private lateinit var mySearchViewEditText: EditText
 
     // 옵저버블 통합 제거를 위한 CompositeDisposable
-    private val myCompositeDisposable: CompositeDisposable = CompositeDisposable()
+//    private val myCompositeDisposable: CompositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,7 +119,10 @@ class PhotoCollectionActivity : AppCompatActivity(),
     }// onCreate
 
     override fun onDestroy() {
-        this.myCompositeDisposable.clear()
+        /*
+        Rx적용부분
+         */
+//        this.myCompositeDisposable.clear()
         super.onDestroy()
     }
 
@@ -179,6 +190,10 @@ class PhotoCollectionActivity : AppCompatActivity(),
             // 서치뷰에서 EditText를 가져온다
             mySearchViewEditText = this.findViewById(androidx.appcompat.R.id.search_src_text)
 
+            /* Rx 적용
+            /**
+             * RxJava debounce
+             */
             // SearchView EditText 옵저버블 만들기
             val editTextChangeObservable = mySearchViewEditText.textChanges()
 
@@ -208,6 +223,30 @@ class PhotoCollectionActivity : AppCompatActivity(),
                     )
 
             myCompositeDisposable.add(searchEditTextSubscription)
+
+             */
+
+            /*
+            Coroutine
+            Rx의 스케줄러와 비슷
+            IO 스레드에서 돌리겠다
+             */
+            GlobalScope.launch(context = Dispatchers.IO) {
+
+                // editText가 변경 되었을 때
+                val editTextFlow = mySearchViewEditText.textChangesToFlow()
+
+                editTextFlow
+                    .debounce(2000)
+                    .filter {
+                        it?.length!! > 0
+                    }
+                    .onEach {
+                        Log.d(TAG, "flow로 받는다 $it")
+                    }
+                    .launchIn(this)
+            }
+
         }
 
         this.mySearchViewEditText.apply {
