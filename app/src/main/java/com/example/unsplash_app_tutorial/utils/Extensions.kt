@@ -52,7 +52,7 @@ fun EditText.onMyTextChanged(completion: (Editable?) -> Unit) {
 fun EditText.textChangesToFlow(): Flow<CharSequence?> {
 
     // flow 콜백 받기
-    return callbackFlow<CharSequence> {
+    return callbackFlow {
         val listener = object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                 Unit

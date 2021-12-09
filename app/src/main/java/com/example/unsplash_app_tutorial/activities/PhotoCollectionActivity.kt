@@ -34,16 +34,15 @@ import io.reactivex.rxjava3.disposables.Disposable
 import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_photo_collection.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
+import kotlin.coroutines.CoroutineContext
 
 class PhotoCollectionActivity : AppCompatActivity(),
     SearchView.OnQueryTextListener,
@@ -68,8 +67,15 @@ class PhotoCollectionActivity : AppCompatActivity(),
     // 서치뷰 에딧 텍스트
     private lateinit var mySearchViewEditText: EditText
 
+    /*
+     rx 적용부분
     // 옵저버블 통합 제거를 위한 CompositeDisposable
 //    private val myCompositeDisposable: CompositeDisposable = CompositeDisposable()
+     */
+
+    private var myCoroutineJob : Job = Job()
+    private val myCoroutineContext: CoroutineContext
+        get() = Dispatchers.IO + myCoroutineJob
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,10 +125,12 @@ class PhotoCollectionActivity : AppCompatActivity(),
     }// onCreate
 
     override fun onDestroy() {
+        Log.d(TAG, "PhotoCollectionActivity - onDestroy() called / ")
         /*
-        Rx적용부분
+        Rx 적용부분
+        this.myCompositeDisposable.clear()
          */
-//        this.myCompositeDisposable.clear()
+        myCoroutineContext.cancel()
         super.onDestroy()
     }
 
@@ -191,9 +199,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
             mySearchViewEditText = this.findViewById(androidx.appcompat.R.id.search_src_text)
 
             /* Rx 적용
-            /**
-             * RxJava debounce
-             */
+            // RxJava debounce
             // SearchView EditText 옵저버블 만들기
             val editTextChangeObservable = mySearchViewEditText.textChanges()
 
@@ -231,12 +237,14 @@ class PhotoCollectionActivity : AppCompatActivity(),
             Rx의 스케줄러와 비슷
             IO 스레드에서 돌리겠다
              */
-            GlobalScope.launch(context = Dispatchers.IO) {
+            GlobalScope.launch(context = myCoroutineContext) {
 
                 // editText가 변경 되었을 때
                 val editTextFlow = mySearchViewEditText.textChangesToFlow()
 
                 editTextFlow
+                    // 연산자들
+                    // 입력되고 나서 2초 뒤에 받는다
                     .debounce(2000)
                     .filter {
                         it?.length!! > 0
