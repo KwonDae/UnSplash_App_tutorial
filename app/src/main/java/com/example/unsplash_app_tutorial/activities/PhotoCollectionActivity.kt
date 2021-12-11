@@ -27,6 +27,8 @@ import com.example.unsplash_app_tutorial.utils.RESPONSE_STATUS
 import com.example.unsplash_app_tutorial.utils.SharedPrefManager
 import com.example.unsplash_app_tutorial.utils.textChangesToFlow
 import com.example.unsplash_app_tutorial.utils.toStrings
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.jakewharton.rxbinding4.widget.textChanges
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.disposables.CompositeDisposable
@@ -35,10 +37,7 @@ import io.reactivex.rxjava3.kotlin.subscribeBy
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_photo_collection.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
@@ -237,10 +236,10 @@ class PhotoCollectionActivity : AppCompatActivity(),
             Rx의 스케줄러와 비슷
             IO 스레드에서 돌리겠다
              */
-            GlobalScope.launch(context = myCoroutineContext) {
+            CoroutineScope(context = myCoroutineContext).launch {
 
                 // editText가 변경 되었을 때
-                val editTextFlow = mySearchViewEditText.textChangesToFlow()
+                val editTextFlow: Flow<CharSequence?> = mySearchViewEditText.textChangesToFlow()
 
                 editTextFlow
                     // 연산자들
@@ -253,6 +252,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
                         Log.d(TAG, "flow로 받는다 $it")
                     }
                     .launchIn(this)
+
             }
 
         }
@@ -409,7 +409,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
     }
 
     //검색어 저장
-    private fun insertSearchTermHistory(searchTerm: String) {
+    private fun insertSearchTermHistory(searchTerm: String)  {
         Log.d(TAG, "PhotoCollectionActivity - insertSearchTermHistory called / ")
 
         if (SharedPrefManager.checkHistoryMode()) {
@@ -438,4 +438,6 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
         }
     }
+
+    fun provide() : Gson = GsonBuilder().create()
 }
