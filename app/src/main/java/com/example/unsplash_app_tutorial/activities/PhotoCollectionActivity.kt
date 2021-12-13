@@ -7,12 +7,16 @@ import android.os.Bundle
 import android.text.InputFilter
 import android.util.Log
 import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.widget.CompoundButton
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.MenuProvider
+import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.unsplash_app_tutorial.R
@@ -29,18 +33,10 @@ import com.example.unsplash_app_tutorial.utils.textChangesToFlow
 import com.example.unsplash_app_tutorial.utils.toStrings
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.jakewharton.rxbinding4.widget.textChanges
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.rxjava3.kotlin.subscribeBy
-import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_photo_collection.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
 import kotlin.coroutines.CoroutineContext
 
 class PhotoCollectionActivity : AppCompatActivity(),
@@ -82,6 +78,113 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
         val bundle = intent.getBundleExtra("array_bundle")
         val searchTerm = intent.getStringExtra("search_term")
+
+        addMenuProvider(object: MenuProvider {
+            override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+                Log.d(TAG, "PhotoCollectionActivity - onCreateOptionsMenu called / ");
+                val inflater = menuInflater
+                inflater.inflate(R.menu.top_app_bar_menu, menu)
+
+                val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+
+                mySearchView = menu?.findItem(R.id.search_menu_item)?.actionView as SearchView
+
+                mySearchView.apply {
+                    this.queryHint = "검색어를 입력해주세요"
+
+                    this.setOnQueryTextListener(this@PhotoCollectionActivity)
+
+                    this.setOnQueryTextFocusChangeListener { _, hasExpaned ->
+                        when (hasExpaned) {
+                            true -> {
+                                Log.d(TAG, "서치뷰 열림");
+//                                linear_search_history_view.visibility = View.VISIBLE
+
+                                handleSearchViewUi()
+                            }
+                            false -> {
+                                Log.d(TAG, "서치뷰 닫힘")
+                                linear_search_history_view.visibility = View.INVISIBLE
+                            }
+                        }
+                    }
+                    // 서치뷰에서 EditText를 가져온다
+                    mySearchViewEditText = this.findViewById(androidx.appcompat.R.id.search_src_text)
+
+                    /* Rx 적용
+                    // RxJava debounce
+                    // SearchView EditText 옵저버블 만들기
+                    val editTextChangeObservable = mySearchViewEditText.textChanges()
+
+                    val searchEditTextSubscription: Disposable =
+                        // 옵저버블 연산자 추가
+                        editTextChangeObservable
+                            // 글자가 입력되고 나서 0.8초 후에 onNext 이벤트로 데이터 흘러보내기
+                            .debounce(1000, TimeUnit.MILLISECONDS)
+                            // IO 쓰레드에서 돌리겠다.
+                            // Scheduler instance intended for IO-bound work.
+                            // 네트워크 요청, 파일 읽기, 쓰기, 디비처리 등
+                            .subscribeOn(Schedulers.io())
+                            // 구독을 통해 이벤트 응답 받기
+                            .subscribeBy(
+                                onNext= {
+                                    Log.d("RX", "onNext : $it")
+                                    if(it.isNotEmpty()) {
+                                        searchPhotoApiCall(it.toString())
+                                    }
+                                },
+                                onComplete = {
+                                    Log.d("RX", "onComplete")
+                                },
+                                onError = {
+                                    Log.d("RX", "onError : ${it.message}")
+                                }
+                            )
+
+                    myCompositeDisposable.add(searchEditTextSubscription)
+
+                     */
+
+                    /*
+                    Coroutine
+                    Rx의 스케줄러와 비슷
+                    IO 스레드에서 돌리겠다
+                     */
+
+                    CoroutineScope(Dispatchers.IO).launch {
+
+                        // editText가 변경 되었을 때
+                        val editTextFlow: Flow<CharSequence?> = mySearchViewEditText.textChangesToFlow()
+
+                        editTextFlow
+                            // 연산자들
+                            // 입력되고 나서 2초 뒤에 받는다
+                            .debounce(1000)
+                            .filter {
+                                it?.length!! > 0
+                            }
+                            .onEach {
+                                Log.d(TAG, "flow로 받는다 $it")
+                                searchPhotoApiCall(it.toString())
+                            }
+                            .launchIn(this)
+
+                    }
+
+                }
+
+                mySearchViewEditText.apply {
+                    this.filters = arrayOf(InputFilter.LengthFilter(12))
+                    this.setTextColor(Color.WHITE)
+                    this.setHintTextColor(Color.WHITE)
+                }
+            }
+
+            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+                return true
+            }
+
+        }, this)
 
         Log.d(
             TAG,
@@ -130,6 +233,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
         this.myCompositeDisposable.clear()
          */
         myCoroutineContext.cancel()
+
         super.onDestroy()
     }
 
@@ -166,105 +270,107 @@ class PhotoCollectionActivity : AppCompatActivity(),
     }
 
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        Log.d(TAG, "PhotoCollectionActivity - onCreateOptionsMenu called / ");
-        val inflater = menuInflater
-        inflater.inflate(R.menu.top_app_bar_menu, menu)
-
-        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
-
-        this.mySearchView = menu?.findItem(R.id.search_menu_item)?.actionView as SearchView
-
-        this.mySearchView.apply {
-            this.queryHint = "검색어를 입력해주세요"
-
-            this.setOnQueryTextListener(this@PhotoCollectionActivity)
-
-            this.setOnQueryTextFocusChangeListener { _, hasExpaned ->
-                when (hasExpaned) {
-                    true -> {
-                        Log.d(TAG, "서치뷰 열림");
+//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+//        Log.d(TAG, "PhotoCollectionActivity - onCreateOptionsMenu called / ");
+//        val inflater = menuInflater
+//        inflater.inflate(R.menu.top_app_bar_menu, menu)
+//
+//        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+//
+//        this.mySearchView = menu?.findItem(R.id.search_menu_item)?.actionView as SearchView
+//
+//        this.mySearchView.apply {
+//            this.queryHint = "검색어를 입력해주세요"
+//
+//            this.setOnQueryTextListener(this@PhotoCollectionActivity)
+//
+//            this.setOnQueryTextFocusChangeListener { _, hasExpaned ->
+//                when (hasExpaned) {
+//                    true -> {
+//                        Log.d(TAG, "서치뷰 열림");
 //                        linear_search_history_view.visibility = View.VISIBLE
-
-                        handleSearchViewUi()
-                    }
-                    false -> {
-                        Log.d(TAG, "서치뷰 닫힘")
-                        linear_search_history_view.visibility = View.INVISIBLE
-                    }
-                }
-            }
-            // 서치뷰에서 EditText를 가져온다
-            mySearchViewEditText = this.findViewById(androidx.appcompat.R.id.search_src_text)
-
-            /* Rx 적용
-            // RxJava debounce
-            // SearchView EditText 옵저버블 만들기
-            val editTextChangeObservable = mySearchViewEditText.textChanges()
-
-            val searchEditTextSubscription: Disposable =
-                // 옵저버블 연산자 추가
-                editTextChangeObservable
-                    // 글자가 입력되고 나서 0.8초 후에 onNext 이벤트로 데이터 흘러보내기
-                    .debounce(1000, TimeUnit.MILLISECONDS)
-                    // IO 쓰레드에서 돌리겠다.
-                    // Scheduler instance intended for IO-bound work.
-                    // 네트워크 요청, 파일 읽기, 쓰기, 디비처리 등
-                    .subscribeOn(Schedulers.io())
-                    // 구독을 통해 이벤트 응답 받기
-                    .subscribeBy(
-                        onNext= {
-                            Log.d("RX", "onNext : $it")
-                            if(it.isNotEmpty()) {
-                                searchPhotoApiCall(it.toString())
-                            }
-                        },
-                        onComplete = {
-                            Log.d("RX", "onComplete")
-                        },
-                        onError = {
-                            Log.d("RX", "onError : ${it.message}")
-                        }
-                    )
-
-            myCompositeDisposable.add(searchEditTextSubscription)
-
-             */
-
-            /*
-            Coroutine
-            Rx의 스케줄러와 비슷
-            IO 스레드에서 돌리겠다
-             */
-            CoroutineScope(context = myCoroutineContext).launch {
-
-                // editText가 변경 되었을 때
-                val editTextFlow: Flow<CharSequence?> = mySearchViewEditText.textChangesToFlow()
-
-                editTextFlow
-                    // 연산자들
-                    // 입력되고 나서 2초 뒤에 받는다
-                    .debounce(2000)
-                    .filter {
-                        it?.length!! > 0
-                    }
-                    .onEach {
-                        Log.d(TAG, "flow로 받는다 $it")
-                    }
-                    .launchIn(this)
-
-            }
-
-        }
-
-        this.mySearchViewEditText.apply {
-            this.filters = arrayOf(InputFilter.LengthFilter(12))
-            this.setTextColor(Color.WHITE)
-            this.setHintTextColor(Color.WHITE)
-        }
-
-        return true
-    }
+//
+//                        handleSearchViewUi()
+//                    }
+//                    false -> {
+//                        Log.d(TAG, "서치뷰 닫힘")
+//                        linear_search_history_view.visibility = View.INVISIBLE
+//                    }
+//                }
+//            }
+//            // 서치뷰에서 EditText를 가져온다
+//            mySearchViewEditText = this.findViewById(androidx.appcompat.R.id.search_src_text)
+//
+//            /* Rx 적용
+//            // RxJava debounce
+//            // SearchView EditText 옵저버블 만들기
+//            val editTextChangeObservable = mySearchViewEditText.textChanges()
+//
+//            val searchEditTextSubscription: Disposable =
+//                // 옵저버블 연산자 추가
+//                editTextChangeObservable
+//                    // 글자가 입력되고 나서 0.8초 후에 onNext 이벤트로 데이터 흘러보내기
+//                    .debounce(1000, TimeUnit.MILLISECONDS)
+//                    // IO 쓰레드에서 돌리겠다.
+//                    // Scheduler instance intended for IO-bound work.
+//                    // 네트워크 요청, 파일 읽기, 쓰기, 디비처리 등
+//                    .subscribeOn(Schedulers.io())
+//                    // 구독을 통해 이벤트 응답 받기
+//                    .subscribeBy(
+//                        onNext= {
+//                            Log.d("RX", "onNext : $it")
+//                            if(it.isNotEmpty()) {
+//                                searchPhotoApiCall(it.toString())
+//                            }
+//                        },
+//                        onComplete = {
+//                            Log.d("RX", "onComplete")
+//                        },
+//                        onError = {
+//                            Log.d("RX", "onError : ${it.message}")
+//                        }
+//                    )
+//
+//            myCompositeDisposable.add(searchEditTextSubscription)
+//
+//             */
+//
+//            /*
+//            Coroutine
+//            Rx의 스케줄러와 비슷
+//            IO 스레드에서 돌리겠다
+//             */
+//
+//            GlobalScope.launch(context = myCoroutineContext) {
+//
+//                // editText가 변경 되었을 때
+//                val editTextFlow: Flow<CharSequence?> = mySearchViewEditText.textChangesToFlow()
+//
+//                editTextFlow
+//                    // 연산자들
+//                    // 입력되고 나서 2초 뒤에 받는다
+//                    .debounce(2000)
+//                    .filter {
+//                        it?.length!! > 0
+//                    }
+//                    .onEach {
+//                        Log.d(TAG, "flow로 받는다 $it")
+//
+//                    }
+//                    .launchIn(this)
+//
+//            }
+//
+//        }
+//
+//        this.mySearchViewEditText.apply {
+//            this.filters = arrayOf(InputFilter.LengthFilter(12))
+//            this.setTextColor(Color.WHITE)
+//            this.setHintTextColor(Color.WHITE)
+//        }
+//
+//        return true
+//    }
 
     // 서치뷰 검색어 입력 이벤트
     // 검색버튼이 클릭되었을 때
@@ -439,5 +545,4 @@ class PhotoCollectionActivity : AppCompatActivity(),
         }
     }
 
-    fun provide() : Gson = GsonBuilder().create()
 }
