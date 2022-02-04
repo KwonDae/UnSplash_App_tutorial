@@ -4,6 +4,7 @@ import android.util.Log
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.unsplash_app_tutorial.App
 import com.example.unsplash_app_tutorial.R
 import com.example.unsplash_app_tutorial.model.Photo
@@ -28,6 +29,7 @@ class PhotoItemViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView) {
         //이미지 설정한다.
         Glide.with(App.instance)
             .load(photoItem.thumbnail)
+            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
             .placeholder(R.drawable.ic_baseline_add_to_photos_24)
             .into(photoImageView)
 

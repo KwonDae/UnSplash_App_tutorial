@@ -15,6 +15,7 @@
         android:icon="@drawable/ic_baseline_expand_more_24"
         android:title="더보기"
         android:contentDescription="더보기 메뉴"
+        android:actionViewClass=""
         app:showAsAction="ifRoom" />
 
 </menu>

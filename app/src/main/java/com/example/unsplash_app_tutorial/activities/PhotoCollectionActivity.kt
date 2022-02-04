@@ -16,7 +16,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuProvider
-import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.unsplash_app_tutorial.R
@@ -31,11 +30,10 @@ import com.example.unsplash_app_tutorial.utils.RESPONSE_STATUS
 import com.example.unsplash_app_tutorial.utils.SharedPrefManager
 import com.example.unsplash_app_tutorial.utils.textChangesToFlow
 import com.example.unsplash_app_tutorial.utils.toStrings
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import kotlinx.android.synthetic.main.activity_photo_collection.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import retrofit2.Retrofit
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
@@ -82,8 +80,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
         addMenuProvider(object: MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 Log.d(TAG, "PhotoCollectionActivity - onCreateOptionsMenu called / ");
-                val inflater = menuInflater
-                inflater.inflate(R.menu.top_app_bar_menu, menu)
+                menuInflater.inflate(R.menu.top_app_bar_menu, menu)
 
                 val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
 
@@ -98,7 +95,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
                         when (hasExpaned) {
                             true -> {
                                 Log.d(TAG, "서치뷰 열림");
-//                                linear_search_history_view.visibility = View.VISIBLE
+                                linear_search_history_view.visibility = View.VISIBLE
 
                                 handleSearchViewUi()
                             }
@@ -109,7 +106,8 @@ class PhotoCollectionActivity : AppCompatActivity(),
                         }
                     }
                     // 서치뷰에서 EditText를 가져온다
-                    mySearchViewEditText = this.findViewById(androidx.appcompat.R.id.search_src_text)
+                    mySearchViewEditText =
+                        this.findViewById(androidx.appcompat.R.id.search_src_text)
 
                     /* Rx 적용
                     // RxJava debounce
@@ -150,11 +148,11 @@ class PhotoCollectionActivity : AppCompatActivity(),
                     Rx의 스케줄러와 비슷
                     IO 스레드에서 돌리겠다
                      */
-
-                    CoroutineScope(Dispatchers.IO).launch {
+                    CoroutineScope(context = myCoroutineContext).launch {
 
                         // editText가 변경 되었을 때
-                        val editTextFlow: Flow<CharSequence?> = mySearchViewEditText.textChangesToFlow()
+                        val editTextFlow: Flow<CharSequence?> =
+                            mySearchViewEditText.textChangesToFlow()
 
                         editTextFlow
                             // 연산자들
@@ -170,6 +168,27 @@ class PhotoCollectionActivity : AppCompatActivity(),
                             .launchIn(this)
 
                     }
+
+                    GlobalScope.launch(context = myCoroutineContext) {
+                        // editText가 변경 되었을 때
+                        val editTextFlow: Flow<CharSequence?> =
+                            mySearchViewEditText.textChangesToFlow()
+
+                        editTextFlow
+                            // 연산자들
+                            // 입력되고 나서 2초 뒤에 받는다
+                            .debounce(2000)
+                            .filter {
+                                it?.length!! > 0
+                            }
+                            .onEach {
+                                Log.d(TAG, "flow로 받는다 $it")
+
+                            }
+                            .launchIn(this)
+
+                    }
+
 
                 }
 
@@ -214,7 +233,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
 
         handleSearchViewUi()
 
-        // 감섹 리사이클러뷰 세팅
+        // 검색 리사이클러뷰 세팅
         this.searchHistoryRecyclerViewSetting(this.searchHistoryList)
 
         if (searchTerm?.isNotEmpty()!!) {
@@ -270,7 +289,7 @@ class PhotoCollectionActivity : AppCompatActivity(),
     }
 
 
-//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
 //        Log.d(TAG, "PhotoCollectionActivity - onCreateOptionsMenu called / ");
 //        val inflater = menuInflater
 //        inflater.inflate(R.menu.top_app_bar_menu, menu)
